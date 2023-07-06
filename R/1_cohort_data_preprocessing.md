@@ -1,6 +1,6 @@
 # Cohort pre-processing
 
-The objective of this code is wrangle raw cohort and attendance data into analysis ready format
+The objective of this code is to wrangle raw cohort and attendance data into analysis-ready format.
 
 R version 3.6.2
 
@@ -302,8 +302,6 @@ MM_gp_gold = MM_gp_gold %>% mutate(condition_index_date = ymd(condition_index_da
     %>% filter(patid %in% cancer_gold_master$patid)
     %>% drop_na(condition_index_date)
 
-MM_gp_gold$condition_index_date = as.Date(MM_gp_gold$condition_index_date,format="%Y-%m-%d")
-
 # Capturing earliest diagnosis for each condition per patient (GP data)
 DTmm = data.table(MM_gp_gold)
 index_mm_gp_gold = unique(DTmm[order(condition,eventdate)], by=c("patid","condition"), fromLast=FALSE) 
@@ -552,6 +550,7 @@ cancer_aurum_master = cancer_aurum_master %>% filter(patid %in% enhanced_egil_au
 
 # At this stage it is necessary to process the primary and secondary care data first in order to add the variables of "cancer index diagnosis", "cancer index date", "comorbidity count" and "Age"
 ```
+
 ## Identifying Aurum cohort cancer index diagnoses
 ```R
 # Loading diagnosis data files 
@@ -664,9 +663,9 @@ colnames(CA_hesop_aurum)[2] = "event_date"
 
 # Unifying all event files - adding data tags 
 CA_gp_aurum$data_type = "GP"
-CA_hesapc_epi_aurum$data_type = "HES apc epi"
-CA_hesapc_hosp_aurum$data_type = "HES apc hosp"
-CA_hesop_aurum$data_type = "HES op"
+CA_hesapc_epi_aurum$data_type = "HES_apc_epi"
+CA_hesapc_hosp_aurum$data_type = "HES_apc_hosp"
+CA_hesop_aurum$data_type = "HES_op"
 
 # Unifying all event files - ICD to CPRD translation for HES data
 CA_hes_all_aurum = rbind(CA_hesapc_epi_aurum, CA_hesapc_hosp_aurum, CA_hesop_aurum)
@@ -691,7 +690,7 @@ CA_hes_all_aurum = CA_hes_all_aurum %>% select(-ICD3_code, -ICD4_code)
 # Cancer event table
 CA_hes_all_aurum = CA_hes_all_aurum %>% select(c(1,2,4,3))
     %>% select(c(1,3,2,4))
-CA_gp_gold = CA_gp_gold %>% rename(cancer_diagnosis = condition)
+CA_gp_aurum = CA_gp_aurum %>% rename(cancer_diagnosis = condition)
     %>% select(c(1,3,2,4))
 CA_all_aurum = rbind(CA_gp_aurum, CA_hes_all_aurum)
 CA_all_aurum = CA_all_aurum %>% filter(patid %in% cancer_aurum_master$patid)
@@ -702,28 +701,246 @@ index_cancer_aurum = CA_all_aurum %>% select(c(1,2,3))
 DT = data.table(index_cancer_aurum)
 index_cancer_aurum = unique(DT[order(cancer_index_date)], by="patid", fromLast = FALSE)
 index_cancer_aurum = arrange(index_cancer_aurum, patid)
-
-
-index_cancer_aurum = CA_all_aurum[, c(1,2,3)]
-DT = data.table(index_cancer_aurum)
-index_cancer_aurum = unique(DT[order(event_date)], by="patid", fromLast = FALSE)
-index_cancer_aurum = arrange(index_cancer_aurum, patid)
 ```
 
 ## Identifying Aurum cohort comorbidities diagnoses
-
-
-## Creating base Aurum cohort (Part 2)
-
-
-
-## Combining Gold and Aurum cohort masters
-
 ```R
-# QC sex variable
-cancer_master = cancer_master %>% filter(gender %in% c("1", "2"))
+# Loading diagnosis data files 
+aurum_files = list.files(path = "Aurum_Observation_subsets_headers", pattern = ".RDS", full.names = T)
+output.list = list()
+# Otherwise previously loaded attendance data files used
 
-# QC age variable (QC1)
-cancer_gold_master$QC1 = difftime(cancer_gold_master$dod,cancer_gold_master$dob,units="weeks")
+# Creating mapping lookup to map Aurum conditions to unified conditions
+mm_aurum_codelist = merge(x=mm_aurum_codelist, y=word_codelist, by="condition", all.x=TRUE)
+
+# Identifying non-cancer diagnoses from primary care (individual chunks of Aurum cohort)
+for (i in 1:length(aurum_files)){
+  # read in file and reformat
+  output.list[[i]] = readRDS(aurum_files[i]) %>% 
+    select(patid, obsdate, medcodeid) %>%
+    filter(medcodeid %in% mm_aurum_codelist$code)
+}
+
+MM_gp_aurum = MM_gp_aurum %>% distinct
+    %>% rename(event_date = obsdate)
+    %>% filter(patid %in% cancer_aurum_master$patid)
+    %>% mutate(event_date = ymd(event_date))
+    %>% drop_na(event_date)
+
+# Unifying Aurum conditions
+colnames(mm_aurum_codelist)[1] = "medcodeid"
+MM_gp_aurum = merge(x=MM_gp_aurum, y=mm_aurum_codelist, by="medcodeid", all.x=TRUE, allow.cartesian = TRUE)
+MM_gp_aurum = MM_gp_aurum %>% select(-medcodeid)
+    %>% rename(condition = unified_condition)
+
+# Capturing earliest diagnosis for each condition per patient (GP data)
+DTmm = data.table(MM_gp_aurum)
+index_mm_gp_aurum = unique(DTmm[order(condition,event_date)], by=c("patid","condition"), fromLast=FALSE) 
+index_mm_gp_aurum = arrange(index_mm_gp_aurum, patid)
+index_mm_gp_aurum = index_mm_gp_aurum %>% mutate(condition_index_date = event_date)
+    %>% drop_na(condition) # Removing all cancer diagnoses
+    %>% mutate(condition_diagnosis = condition)
+    %>% select(c(1,3,2))
+    %>% mutate(condition_index_date = ymd(condition_index_date))
+
+# Identifying non-cancer diagnoses from secondary care
+# Load non-cancer ICD codelist
+MM_ICD_codelist = read.csv("Multimorbidity_ICD.csv", header=TRUE, sep=",", stringsAsFactors = FALSE)
+
+# HES APC episodes
+MM_hesapc_epi_aurum = hes_apc_epi_diag %>% select(patid, epistart, ICD)
+    %>% mutate(patid = as.character(patid))
+    %>% mutate(epistart = ymd(epistart))
+    %>% filter(patid %in% cancer_aurum_master$patid)
+# ICD3 codes came in a mix of 3 digit and 4 digit formats in the data. As such, to fully capture all cancer diagnoses, all 4 digit codes were minimised to 3 digits for filtering, and where available, the 4 digit code was then used to map to the specific diagnosis. 
+MM_hesapc_epi_aurum = MM_hesapc_epi_aurum %>% mutate(ICD = gsub(".", "", MM_hesapc_epi_aurum$ICD, fixed=TRUE))
+    %>% mutate(ICD4 = substr(MM_hesapc_epi_aurum$ICD, 1, 4))
+    %>% mutate(ICD3 = substr(MM_hesapc_epi_aurum$ICD, 1, 3))
+    %>% select(-ICD)
+    %>% filter(ICD3 %in% cancer_ICD_codelist$ICD.3)
+
+# HES APC hospital (2 datasets)
+MM_hesapc_hosp_aurum_npr = hes_apc_hosp_diag %>% select(patid, admidate, ICD)
+    %>% mutate(patid = as.character(patid))
+    %>% mutate(admidate = ymd(admidate))
+    %>% filter(patid %in% cancer_aurum_master$patid)
+
+MM_hesapc_hosp_aurum_npr = MM_hesapc_hosp_aurum_npr %>% mutate(ICD = gsub(".", "", MM_hesapc_hosp_aurum_npr$ICD, fixed=TRUE))
+    %>% mutate(ICD4 = substr(MM_hesapc_hosp_aurum_npr$ICD, 1, 4))
+    %>% mutate(ICD3 = substr(MM_hesapc_hosp_aurum_npr$ICD, 1, 3))
+    %>% select(-ICD)
+    %>% filter(ICD3 %in% cancer_ICD_codelist$ICD.3)
+
+MM_hesapc_hosp_aurum_pr = hes_apc_hosp_diag %>% select(patid, admidate, ICD)
+    %>% mutate(patid = as.character(patid))
+    %>% mutate(admidate = ymd(admidate))
+    %>% filter(patid %in% cancer_aurum_master$patid)
+
+MM_hesapc_hosp_aurum_pr = MM_hesapc_hosp_aurum_pr %>% mutate(ICD = gsub(".", "", MM_hesapc_hosp_aurum_pr$ICD, fixed=TRUE))
+    %>% mutate(ICD4 = substr(MM_hesapc_hosp_aurum_pr$ICD, 1, 4))
+    %>% mutate(ICD3 = substr(MM_hesapc_hosp_aurum_pr$ICD, 1, 3))
+    %>% select(-ICD)
+    %>% filter(ICD3 %in% cancer_ICD_codelist$ICD.3)
+
+MM_hesapc_hosp_aurum = rbind(MM_hesapc_hosp_aurum_npr, MM_hesapc_hosp_aurum_pr)
+
+# HES OP 
+hes_op_minimised = lapply(
+  hes_op_yearly,
+  function(df){
+    df = df %>% select(patid, diag_01, HES_yr)
+        %>% mutate(patid = as.character(patid))
+        %>% filter(patid %in% cancer_aurum_master$patid)
+        %>% mutate(diag_01 = gsub(".","", df$diag_01, fixed=TRUE))
+        %>% mutate(ICD4 = substr(df$diag_01, 1, 4))
+        %>% mutate(ICD3 = substr(df$diag_01, 1, 3))
+        %>% select(-diag_01)
+        %>% filter(ICD3 %in% MM_ICD_codelist$ICD.3)
+        %>% mutate(HES_yr = ymd(HES_yr))
+    lubridate::day(df$HES_yr) = 1
+    lubridate::month(df$HES_yr) = 4
+    return(df)
+  }
+)
+
+MM_hesop_aurum = bind_rows(hes_op_minimised)
+
+# Unifying all event files - renaming date column
+colnames(MM_gp_aurum)[2] = "condition_index_date"
+colnames(MM_hesapc_epi_aurum)[2] = "condition_index_date"
+colnames(MM_hesapc_hosp_aurum)[2] = "condition_index_date"
+colnames(MM_hesop_aurum)[2] = "condition_index_date"
+
+# Unifying all event files - adding data tags
+MM_gp_aurum$data_type = "GP"
+MM_hesapc_epi_aurum$data_type = "HES_apc_epi"
+MM_hesapc_hosp_aurum$data_type = "HES_apc_hosp"
+MM_hesop_aurum$data_type = "HES_op"
+
+# Unifying all event files - ICD to CPRD translation for HES data
+MM_hes_all_aurum = rbind(MM_hesapc_epi_aurum, MM_hesapc_hosp_aurum, MM_hesop_aurum)
+
+# Merging 4 digit ICD3 codes
+colnames(MM_ICD_codelist)[1] = "ICD4"
+colnames(MM_ICD_codelist)[2] = "ICD3_code"
+MM_hes_all_aurum = merge(x=MM_hes_all_aurum, y=MM_ICD_codelist, by="ICD4", all.x=TRUE)
+
+# Merging 3 digit ICD3 codes
+colnames(MM_ICD_codelist)[1] = "ICD4_code"
+colnames(MM_ICD_codelist)[2] = "ICD3"
+colnames(MM_ICD_codelist)[3] = "CPRD_final_ICD3"
+MM_hes_all_aurum = merge(x=MM_hes_all_aurum, y=MM_ICD_codelist, by="ICD3", all.x=TRUE)
+
+# Unifying names for hes condition (CPRD_final = condition name in translation file)
+MM_hes_all_aurum = MM_hes_all_aurum %>% select(-ICD3_code, -ICD4_code)
+    %>% mutate(cancer_diagnosis = ifelse(!is.na(CPRD_final), CPRD_final, CPRD_final_ICD3))
+    %>% distinct()
+    %>% select(-CPRD_final, -CPRD_final_ICD3)
+
+# Non-cancer event table (HES only, as GP was done earlier)
+MM_hes_all_aurum = MM_hes_all_aurum %>% select(c(3,6,4,5,1,2))
+    %>% select(c(1,2,3,4))
+
+# Capturing earliest diagnosis for each unique condition (HES data)
+index_mm_hes_aurum = MM_hes_all_aurum %>% select(c(1,2,3))
+DTmm = data.table(MM_hes_all_aurum)
+index_mm_hes_aurum = unique(DTmm[order(condition_diagnosis,condition_index_date)], by=c("patid","condition_diagnosis"), fromLast=FALSE) 
+index_mm_hes_aurum = arrange(index_mm_hes_aurum, patid)
+
+# Merging primary and secondary care for all multimorbidity diagnoses
+MM_gp_aurum = MM_gp_aurum %>% rename(condition_diagnosis = condition)
+    %>% rename(condition_index_date = event_date)
+    %>% select(c(1,3,2))
+MM_all_aurum = rbind(MM_gp_aurum, MM_hes_all_aurum)
+
+# Capturing earliest diagnosis for each unique condition (all data)
+index_multimorbidity_aurum = rbind(index_mm_gp_aurum, index_mm_hes_aurum)
+DTmm = data.table(index_multimorbidity_aurum)
+index_multimorbidity_aurum = unique(DTmm[order(condition_diagnosis,condition_index_date)], by=c("patid","condition_diagnosis"), fromLast=FALSE)
+index_multimorbidity_aurum = arrange(index_multimorbidity_aurum, patid)
+
+# Transformation of diagnosis table into wide format
+index_multimorbidity_aurum_wide = reshape(index_multimorbidity_aurum, idvar="patid", v.names="condition_index_date", timevar="condition_diagnosis", direction="wide")
+colnames(index_multimorbidity_aurum_wide) = gsub(pattern="condition_index_date.", replacement="", x=colnames(index_multimorbidity_aurum_wide))
+index_multimorbidity_aurum_wide = as.data.frame(index_multimorbidity_aurum_wide)
 
 ```
+
+## Creating base Aurum cohort (Part 2)
+```R
+# Index cancer diagnosis and index date variables
+cancer_aurum_master = merge(x=cancer_aurum_master, y=index_cancer_aurum, by="patid", all.x=TRUE)
+cancer_aurum_master = cancer_aurum_master %>% mutate(cancer_index_diagnosis = cancer_diagnosis)
+    %>% drop_na(cancer_index_date)
+
+# Age variable 
+cancer_aurum_master$age = interval(start = cancer_aurum_master$dob, end = cancer_aurum_master$cancer_index_date)/duration(n=1, unit="years")
+
+# Comorbidity count 
+temp_mm_master = cancer_aurum_master[, c(1,13)]
+calculation_mm = merge(x=index_multimorbidity_aurum_wide, y=temp_mm_master, by="patid", all.x=TRUE)
+mm_patid = calculation_mm[, 1, drop=FALSE]
+calculation_mm$patid = NULL
+
+# Function to calculate time between index cancer date and comorbidities
+timecalc = function(x){
+  cancer_index = calculation_mm$cancer_index_date + 1
+  calculation_mm$x = difftime(cancer_index, x, units = "days")
+}
+
+# Calculating sum of conditions prior to cancer index date 
+calculation_mm = sapply(calculation_mm, timecalc)
+calculation_mm[calculation_mm < 0 | is.na(calculation_mm)] = 0 
+calculation_mm[calculation_mm > 0] = 1
+calculation_mm = as.data.frame(calculation_mm)
+calculation_mm$cancer_index_date = NULL
+
+# Merging condition count with master cohort
+mm_patid$condition_count = rowSums(calculation_mm)
+cancer_aurum_master = merge(x=cancer_aurum_master, y=mm_patid, by="patid", all.x=TRUE)
+cancer_aurum_master = cancer_aurum_master %>% mutate(condition_count = ifelse(is.na(condition_count), 0, condition_count))
+```
+
+## Combining Gold and Aurum cohort masters
+```R
+# Unifying column names
+cancer_gold_master$followup = NULL
+colnames(cancer_gold_master) = colnames(cancer_aurum_master)
+
+# Combining and arranging by patid 
+cancer_master = rbind(cancer_gold_master, cancer_aurum_master)
+cancer_master = arrange(cancer_master, patid)
+
+# Remove patients not registered 1 year prior to study start (1998-01-01)
+cancer_master = cancer_master %>% filter(data_start < "1997-01-01") 
+
+# Remove patients with <365 days of follow up
+cancer_master %>% mutate(study_end = ymd("2021-03-31"))
+cancer_alive = cancer_master %>% filter(dead == "0")
+    %>% mutate(endpoint = pmin(cancer_alive$study_end, cancer_alive$data_end))
+
+cancer_dead = cancer_master %>% filter(dead == "1")
+    %>% mutate(pmin(cancer_dead$study_end, cancer_dead$data_end, cancer_dead$dod))
+
+cancer_master = rbind(cancer_alive, cancer_dead)
+cancer_master %>% mutate(follow_up = difftime(cancer_master$endpoint, cancer_master$cancer_index_date, unit = "days"))
+    %>% filter(follow_up >= 365)
+
+# Remove patients where start of data < end of data
+cancer_master = cancer_master %>% filter(data_start < data_end)
+
+# Remove patients where date of death < date of birth
+cancer_master = cancer_master %>% filter(dod < dob)
+
+# Remove patients with errors in age
+cancer_master = cancer_master %>% filter(age >= 0)
+
+# Remove patients with ineligible gender
+cancer_master = cancer_master %>% filter(gender %in% c("1", "2"))
+
+# Remove patients with invalid condition counts, manually checked to be errors during input by practice
+cancer_master = cancer_master %>% filter(condition_count <72)
+```
+
+# Output
+Output file is a cohort file with 564,026 eligible individuals. One further step is later applied after attendance pre-processing to remove individuals who only have attendance dates prior to their cancer index diagnosis date. This brings the final count of eligible individuals to 561,116 individuals.
