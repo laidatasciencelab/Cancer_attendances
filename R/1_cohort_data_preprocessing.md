@@ -16,6 +16,7 @@ R version 3.6.2
 9) CPRD GOLD & Aurum linkage eligibility file 
 10) Cancer ICD 3 codelist
 11) Other conditions ICD 3 codelist
+12) Conditions unification mapping file
 
 ## Importing packages 
 ```R
