@@ -193,7 +193,7 @@ CA_hesapc_hosp_gold_npr = CA_hesapc_hosp_gold_npr %>% mutate(ICD = gsub(".", "",
     %>% select(-ICD)
     %>% filter(ICD3 %in% cancer_ICD_codelist$ICD.3)
 
-CA_hesapc_hosp_gold_pr = hes_apc_hosp_diag %>% select(patid, admidate, ICD)
+CA_hesapc_hosp_gold_pr = hes_apc_hosp_p_diag %>% select(patid, admidate, ICD)
     %>% mutate(patid = as.character(patid))
     %>% mutate(admidate = ymd(admidate))
 
@@ -341,7 +341,7 @@ MM_hesapc_hosp_gold_npr = MM_hesapc_hosp_gold_npr %>% mutate(ICD = gsub(".", "",
     %>% select(-ICD)
     %>% filter(ICD3 %in% cancer_ICD_codelist$ICD.3)
 
-MM_hesapc_hosp_gold_pr = hes_apc_hosp_diag %>% select(patid, admidate, ICD)
+MM_hesapc_hosp_gold_pr = hes_apc_hosp_p_diag %>% select(patid, admidate, ICD)
     %>% mutate(patid = as.character(patid))
     %>% mutate(admidate = ymd(admidate))
     %>% filter(patid %in% cancer_gold_master$patid)
@@ -622,7 +622,7 @@ CA_hesapc_hosp_aurum_npr = CA_hesapc_hosp_aurum_npr %>% mutate(ICD = gsub(".", "
     %>% select(-ICD)
     %>% filter(ICD3 %in% cancer_ICD_codelist$ICD.3)
 
-CA_hesapc_hosp_aurum_pr = hes_apc_hosp_diag %>% select(patid, admidate, ICD)
+CA_hesapc_hosp_aurum_pr = hes_apc_hosp_p_diag %>% select(patid, admidate, ICD)
     %>% mutate(patid = as.character(patid))
     %>% mutate(admidate = ymd(admidate))
     %>% filter(patid %in% cancer_aurum_master$patid)
@@ -772,7 +772,7 @@ MM_hesapc_hosp_aurum_npr = MM_hesapc_hosp_aurum_npr %>% mutate(ICD = gsub(".", "
     %>% select(-ICD)
     %>% filter(ICD3 %in% cancer_ICD_codelist$ICD.3)
 
-MM_hesapc_hosp_aurum_pr = hes_apc_hosp_diag %>% select(patid, admidate, ICD)
+MM_hesapc_hosp_aurum_pr = hes_apc_hosp_p_diag %>% select(patid, admidate, ICD)
     %>% mutate(patid = as.character(patid))
     %>% mutate(admidate = ymd(admidate))
     %>% filter(patid %in% cancer_aurum_master$patid)
