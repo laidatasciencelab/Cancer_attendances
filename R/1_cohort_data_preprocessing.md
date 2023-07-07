@@ -1,6 +1,6 @@
 # Cohort pre-processing
 
-The objective of this code is to wrangle raw cohort and attendance data into analysis-ready format.
+The objective of this code is to wrangle raw cohort data into analysis-ready format.
 
 R version 3.6.2
 
