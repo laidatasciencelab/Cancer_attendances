@@ -347,11 +347,38 @@ att_hesop_all_aurum = att_hesop_all_aurum %>% select(-ICD3, -ICD4)
 
 att_hesop_all_aurum = rbind(att_hesop_all_aurum, att_hesop_aurum)
 ```
-## Combining datasets to make descriptive analysis attendance dataset
+## Combining gold and aurum datasets and quality checks
+```R
+# Setting cancer date filter
+cancer_index_date = cancer_master %>% select(c(1,13))
 
-## Combining datasets to make time-series analysis attendance dataset
+# GP attendance 
+att_gp_all = rbind(att_gp_gold,att_gp_aurum)
+att_gp_all = att_gp_all %>% filter(event_date > "1920-01-01", event_date < "2021-06-17")
+att_gp_all = merge(att_gp_all, cancer_index_date, on="patid", all.x=TRUE)
+att_gp_all = att_gp_all %>% filter(event_date > cancer_index_date)
+    %>% select(-cancer_index_date)
 
+# HES OP attendance
+att_hesop_all = rbind(att_hesop_all_gold,att_hesop_all_aurum)
+att_hesop_all = att_hesop_all %>% filter(event_date > "1920-01-01", event_date < "2021-06-17")
+att_hesop_all = merge(att_hesop_all, cancer_index_date, on="patid", all.x=TRUE)
+att_hesop_all = att_hesop_all %>% filter(event_date > cancer_index_date)
+    %>% select(-cancer_index_date)
+
+# HES APC attendance
+att_hesapc_all = rbind(att_hesapc_all_gold_spno,att_hesapc_all_aurum_spno)
+att_hesapc_all = att_hesapc_all %>% filter(event_date > "1920-01-01", event_date < "2021-06-17")
+att_hesapc_all = merge(att_hesapc_all, cancer_index_date, on="patid", all.x=TRUE)
+att_hesapc_all = att_hesapc_all %>% filter(event_date > cancer_index_date)
+    %>% select(-cancer_index_date)
+```
 ## QC-ing step for cohort to remove those with no attendances after index date
-
+```R
+# Combining all attendances
+attendance_master = rbind(att_gp_all, att_hesapc_all, att_hesop_all)
+patid_unique = attendance_master %>% distinct(patid)
+cancer_master = cancer_master %>% filter(patid %in% patid_unique$patid)
+```
 ## Output
-Output file is 1) attendance dataset containing HES APC and HES OP attendances for the descriptive analysis and 2) attendance dataset containing GP, HES APC and HES OP attendances for the time-series analysis
+Output file is 1) processed GP attendance file, 2) processed HES OP attendance file, 3) processed HES APC attendance file, 4) finalised eligible cohort master file 
