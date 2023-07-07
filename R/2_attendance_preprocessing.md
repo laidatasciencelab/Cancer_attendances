@@ -192,11 +192,161 @@ att_hesop_all_gold = att_hesop_all_gold %>% select(-ICD3, -ICD4)
 att_hesop_all_gold = rbind(att_hesop_all_gold, att_hesop_gold)
 ```
 ## Processing Aurum attendances
+```R
+# All files previously loaded
 
+# HES APC attendances
+# HES APC critical care
+att_hesapc_cc_aurum = hes_apc_cc_att %>% select(patid, admidate, discharged, epistart, epiend, spno)
+    %>% mutate(patid = as.character(patid))
+    %>% mutate(spno = as.character(spno))
+    %>% filter(patid %in% cancer_master$patid)
+    %>% mutate(admidate = ymd(admidate))
+    %>% mutate(admidate = ymd(discharged))
+    %>% mutate(admidate = ymd(epistart))
+    %>% mutate(admidate = ymd(epiend))
 
+att_hesapc_cc_aurum$admi_dur = difftime(att_hesapc_cc_aurum$discharged+1,att_hesapc_cc_aurum$admidate,units="days")
+att_hesapc_cc_aurum$epi_dur = difftime(att_hesapc_cc_aurum$epiend+1,att_hesapc_cc_aurum$epistart,units="days")
 
+att_hesapc_cc_aurum = att_hesapc_cc_aurum %>% mutate(ifelse(is.na(admi_dur), epi_dur, admi_dur))
+    %>% mutate(ifelse(is.na(admidate), epistart, admidate))
+    %>% select(-discharged, -epistart, -epiend, -admi_dur, -epi_dur)
+    %>% rename(event_date = admidate)
+    %>% drop_na(event_date)
 
+# HES APC augmented care
+att_hesapc_ac_aurum = hes_apc_ac_att %>% select(patid, epistart, epiend, spno)
+    %>% mutate(patid = as.character(patid))
+    %>% mutate(spno = as.character(spno))
+    %>% filter(patid %in% cancer_master$patid)
+    %>% mutate(admidate = ymd(epistart))
+    %>% mutate(admidate = ymd(epiend))
 
+att_hesapc_ac_aurum$duration = difftime(att_hesapc_ac_aurum$epiend+1,att_hesapc_ac_aurum$epistart,units="days")
+
+att_hesapc_ac_aurum = att_hesapc_ac_aurum %>% select(-epiend)
+    %>% rename(event_date = epistart)
+    %>% drop_na(event_date)
+
+# HES APC procedures
+att_hesapc_prod_aurum = hes_apc_prod %>% select(patid, admidate, discharged, epistart, epiend, spno)
+    %>% mutate(patid = as.character(patid))
+    %>% mutate(spno = as.character(spno))
+    %>% filter(patid %in% cancer_master$patid)
+    %>% mutate(admidate = ymd(admidate))
+    %>% mutate(admidate = ymd(discharged))
+    %>% mutate(admidate = ymd(epistart))
+    %>% mutate(admidate = ymd(epiend))
+
+att_hesapc_prod_aurum$admi_dur = difftime(att_hesapc_prod_aurum$discharged+1,att_hesapc_prod_aurum$admidate,units="days")
+att_hesapc_prod_aurum$epi_dur = difftime(att_hesapc_prod_aurum$epiend+1,att_hesapc_prod_aurum$epistart,units="days")
+
+att_hesapc_prod_aurum = att_hesapc_prod_aurum %>% mutate(ifelse(is.na(admi_dur), epi_dur, admi_dur))
+    %>% mutate(ifelse(is.na(admidate), epistart, admidate))
+    %>% select(-discharged, -epistart, -epiend, -admi_dur, -epi_dur)
+    %>% rename(event_date = admidate)
+    %>% drop_na(event_date)
+
+# HES APC hospitalisations
+att_hesapc_hosp_aurum = hes_apc_hosp_att %>% select(patid, admidate, discharged, spno)
+    %>% mutate(patid = as.character(patid))
+    %>% mutate(spno = as.character(spno))
+    %>% filter(patid %in% cancer_master$patid)
+    %>% mutate(admidate = ymd(admidate))
+    %>% mutate(admidate = ymd(discharged))
+
+att_hesapc_hosp_aurum$duration = difftime(att_hesapc_hosp_aurum$discharged+1,att_hesapc_hosp_aurum$admidate,units="days")
+
+att_hesapc_hosp_aurum = att_hesapc_hosp_aurum %>% select(-discharged)
+    %>% rename(event_date = admidate)
+    %>% drop_na(event_date)
+
+# HES APC episodes
+att_hesapc_epidiag_aurum = hes_apc_epi_diag %>% select(patid, epistart, epiend, spno)
+    %>% mutate(patid = as.character(patid))
+    %>% mutate(spno = as.character(spno))
+    %>% filter(patid %in% cancer_master$patid)
+    %>% mutate(admidate = ymd(epistart))
+    %>% mutate(admidate = ymd(epiend))
+
+att_hesapc_epidiag_aurum$duration = difftime(att_hesapc_epidiag_aurum$epiend+1,att_hesapc_epidiag_aurum$epistart,units="days")
+
+att_hesapc_epidiag_aurum = att_hesapc_epidiag_aurum %>% select(-epiend)
+    %>% rename(event_date = epistart)
+    %>% drop_na(event_date)
+
+# HES APC hospital (2 datasets)
+att_hesapc_hosppdiag_aurum = hes_apc_hosp_p_diag %>% select(patid, admidate, discharged, spno)
+    %>% mutate(patid = as.character(patid))
+    %>% mutate(spno = as.character(spno))
+    %>% filter(patid %in% cancer_master$patid)
+    %>% mutate(admidate = ymd(admidate))
+    %>% mutate(admidate = ymd(discharged))
+
+att_hesapc_hosppdiag_aurum$duration = difftime(att_hesapc_hosppdiag_aurum$discharged+1,att_hesapc_hosppdiag_aurum$admidate,units="days")
+
+att_hesapc_hosppdiag_aurum = att_hesapc_hosppdiag_aurum %>% select(-discharged)
+    %>% rename(event_date = admidate)
+    %>% drop_na(event_date)
+
+att_hesapc_hospnprdiag_aurum = hes_apc_hosp_diag %>% select(patid, admidate, discharged, spno)
+    %>% mutate(patid = as.character(patid))
+    %>% mutate(spno = as.character(spno))
+    %>% filter(patid %in% cancer_master$patid)
+    %>% mutate(admidate = ymd(admidate))
+    %>% mutate(admidate = ymd(discharged))
+
+att_hesapc_hospnprdiag_aurum$duration = difftime(att_hesapc_hospnprdiag_aurum$discharged+1,att_hesapc_hospnprdiag_aurum$admidate,units="days")
+
+att_hesapc_hospnprdiag_aurum = att_hesapc_hospnprdiag_aurum %>% select(-discharged)
+    %>% rename(event_date = admidate)
+    %>% drop_na(event_date)
+
+# Combining HES APC attendances
+att_hesapc_all_aurum = rbind(att_hesapc_ac_aurum, att_hesapc_cc_aurum, att_hesapc_epidiag_aurum, att_hesapc_hosp_aurum, att_hesapc_hospnprdiag_aurum, att_hesapc_hosppdiag_aurum, att_hesapc_prod_aurum)
+
+# Only keep unique SPNOs to avoid repeats, longest duration supercedes
+DTmm = data.table(att_hesapc_all_aurum)
+att_hesapc_all_aurum_spno = unique(DTmm[order(patid,duration)], by=c("patid","spno"), fromLast=TRUE)
+att_hesapc_all_aurum_spno = arrange(att_hesapc_all_aurum_spno, spno)
+
+att_hesapc_all_aurum_spno = att_hesapc_all_aurum_spno %>% select(-spno)
+
+# GP attendances
+colnames(CA_gp_aurum) = colnames(MM_gp_aurum)
+att_gp_aurum = rbind(CA_gp_aurum, MM_gp_aurum)
+att_gp_aurum = att_gp_aurum %>% filter(patid %in% cancer_master$patid)
+    %>% select(-condition_diagnosis)
+    %>% rename(event_date = condition_index_date)
+    %>% mutate(duration = 1)
+    %>% drop_na(event_date)
+
+# HES OP attendances
+hes_op_att_minimised = lapply(
+  hes_op_att,
+  function(df){
+    df = df %>% select(patid, ethnos, apptdate)
+        %>% mutate(patid = as.character(patid))
+        %>% filter(patid %in% cancer_master$patid)
+        %>% mutate(apptdate = ymd(apptdate))
+        %>% drop_na(apptdate)
+    return(df)
+  }
+)
+
+att_hesop_aurum = bind_rows(hes_op_att_minimised)
+att_hesop_aurum = att_hesop_aurum %>% select(c(1,3))
+    %>% rename(event_date = 2)
+    %>% mutate(duration = 1)
+
+att_hesop_all_aurum = rbind(CA_hesop_aurum, MM_hesop_aurum)
+att_hesop_all_aurum = att_hesop_all_aurum %>% select(-ICD3, -ICD4)
+    %>% rename(event_date = 2)
+    %>% mutate(duration = 1)
+
+att_hesop_all_aurum = rbind(att_hesop_all_aurum, att_hesop_aurum)
+```
 ## Combining datasets to make descriptive analysis attendance dataset
 
 ## Combining datasets to make time-series analysis attendance dataset
