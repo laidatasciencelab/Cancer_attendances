@@ -16,6 +16,7 @@ library(forecast)
 
 ## Input files
 1) Processed weekly attendance count file, after manual addition of coefficients
+2) Counterfactual weekly attendance count file
 
 ## Interrupted time-series modelling, Gaussian generalised linear model
 
