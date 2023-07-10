@@ -4,6 +4,16 @@ The objective of this code is to wrangle raw attendance data into analysis-ready
 
 R version 3.6.2
 
+## Importing packages
+```R
+library(tidyverse)
+library(data.table)
+library(tableone)
+library(lubridate)
+library(dplyr)
+library(sqldf)
+```
+
 ## Input files
 1) CPRD GOLD & Aurum processed cohort files
 2) CPRD GOLD & Aurum primary care processed attendance files
