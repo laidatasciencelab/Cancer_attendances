@@ -941,6 +941,9 @@ cancer_master = cancer_master %>% filter(gender %in% c("1", "2"))
 
 # Remove patients with invalid condition counts, manually checked to be errors during input by practice
 cancer_master = cancer_master %>% filter(condition_count <72)
+
+# Adding diagnosis time variable 
+cancer_master = cancer_master %>% mutate(diag_after_1 = ifelse(cancer_index_date < "2019-03-23", 0, 1))
 ```
 
 # Output
