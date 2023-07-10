@@ -391,4 +391,4 @@ patid_unique = attendance_master %>% distinct(patid)
 cancer_master = cancer_master %>% filter(patid %in% patid_unique$patid)
 ```
 ## Output
-Output file is 1) processed GP attendance file, 2) processed HES OP attendance file, 3) processed HES APC attendance file, 4) finalised eligible cohort master file 
+Output file is 1) processed GP attendance file, 2) processed HES OP attendance file, 3) processed HES APC attendance file, 4) finalised eligible cohort master file 5) attendance master file
