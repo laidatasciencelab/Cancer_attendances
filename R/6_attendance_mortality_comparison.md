@@ -1,4 +1,4 @@
-# Interrupted time-series analysis
+# Attendance mortality comparison
 
 The objective of this code is to generate cancer mortality counts
 
