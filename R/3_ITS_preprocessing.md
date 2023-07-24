@@ -24,10 +24,10 @@ library(sqldf)
 ## Cohort baseline summary
 ```R
 # Load attendance master file
-attendance_master_noae = readRDS(attendance_master_noae.RDS)
+attendance_master_noae = readRDS("attendance_master_noae.RDS")
 
 # Load cancer master file 
-cancer_master = readRDS(cancer_master.RDS)
+cancer_master = readRDS("cancer_master.RDS")
 
 # Formatting for count generation 
 attendance_master_noae = attendance_master_noae %>% filter(event_date > "2017-12-31")

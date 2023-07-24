@@ -22,7 +22,7 @@ library(forecast)
 ## Assigning stratifications
 ```R
 # Load cancer master file 
-cancer_master = readRDS(cancer_master.RDS)
+cancer_master = readRDS("cancer_master.RDS")
 
 # Load attendance files
 att_hesop_all = readRDS("att_hesop_all.rds")
