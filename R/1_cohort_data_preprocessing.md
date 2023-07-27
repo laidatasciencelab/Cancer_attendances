@@ -910,6 +910,7 @@ colnames(cancer_gold_master) = colnames(cancer_aurum_master)
 
 # Combining and arranging by patid 
 cancer_master = rbind(cancer_gold_master, cancer_aurum_master)
+cancer_master = cancer_master %>% distinct()
 cancer_master = arrange(cancer_master, patid)
 
 # Remove patients not registered 1 year prior to study start (1998-01-01)
