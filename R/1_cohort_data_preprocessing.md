@@ -910,6 +910,7 @@ colnames(cancer_gold_master) = colnames(cancer_aurum_master)
 
 # Combining and arranging by patid 
 cancer_master = rbind(cancer_gold_master, cancer_aurum_master)
+cancer_master = cancer_master %>% distinct()
 cancer_master = arrange(cancer_master, patid)
 
 # Remove patients not registered 1 year prior to study start (1998-01-01)
@@ -1000,4 +1001,4 @@ diag_count_w = diag_count_w %>% filter(!row_number() %in% c(53,106,159,212,265,3
 ```
 
 # Output
-Output file is a cohort file with 564,026 eligible individuals. One further step is later applied after attendance pre-processing to remove individuals who only have attendance dates prior to their cancer index diagnosis date. This brings the final count of eligible individuals to 561,116 individuals. Second output file is an incident diagnosis count file.
+Output file is a cohort file with 564,026 eligible individuals. One further step is later applied after attendance pre-processing to remove individuals who only have attendance dates prior to their cancer index diagnosis date. This brings the final count of eligible individuals to 561,116 individuals.
