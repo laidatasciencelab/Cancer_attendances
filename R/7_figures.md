@@ -237,9 +237,6 @@ rg_v1_plot = plot_map_English_prac_regions(data = (rg_v1),
 
 rg_v1_plot
 
-ggsave("Fig2C_1_PPLD1.pdf", plot=rg_v1_plot, height = 30, width = 20, units = "cm", limitsize=F, useDingbats=FALSE)
-
-
 # MR_LD1
 rg_v2 = region_plot %>% filter(time_period == "LD1-MR") %>% select(c("prac_region", "discrete"))
 
@@ -249,8 +246,6 @@ rg_v2_plot = plot_map_English_prac_regions(data = (rg_v2),
                     drop = FALSE)
 
 rg_v2_plot
-
-ggsave("Fig2C_2_LD1MR.pdf", plot=rg_v2_plot, height = 30, width = 20, units = "cm", limitsize=F, useDingbats=FALSE)
 
 # LD2_MR
 rg_v3 = region_plot %>% filter(time_period == "MR-LD2") %>% select(c("prac_region", "discrete"))
@@ -262,8 +257,6 @@ rg_v3_plot = plot_map_English_prac_regions(data = (rg_v3),
 
 rg_v3_plot
 
-ggsave("Fig2C_3_MRLD2.pdf", plot=rg_v3_plot, height = 30, width = 20, units = "cm", limitsize=F, useDingbats=FALSE)
-
 # LD3_LD2
 rg_v4 = region_plot %>% filter(time_period == "LD2-LD3") %>% select(c("prac_region", "discrete"))
 
@@ -273,8 +266,6 @@ rg_v4_plot = plot_map_English_prac_regions(data = (rg_v4),
                     drop = FALSE)
 
 rg_v4_plot
-
-ggsave("Fig2C_4_LD2LD3.pdf", plot=rg_v4_plot, height = 30, width = 20, units = "cm", limitsize=F, useDingbats=FALSE)
 
 # LL_LD3
 rg_v5 = region_plot %>% filter(time_period == "LD3-LL") %>% select(c("prac_region", "discrete"))
@@ -286,11 +277,6 @@ rg_v5_plot = plot_map_English_prac_regions(data = (rg_v5),
 
 rg_v5_plot
 
-ggsave("Fig2C_5_LD3LL.pdf", plot=rg_v5_plot, height = 30, width = 20, units = "cm", limitsize=F, useDingbats=FALSE)
-```
-
-## Figure 2D
-```R
 # Region plot for volume ratios
 
 # Load data
@@ -308,8 +294,6 @@ rg2_v1_plot = plot_map_English_prac_regions(data = (rg2_v1),
 
 rg2_v1_plot
 
-ggsave("Fig2D_1_PPLD1.pdf", plot=rg2_v1_plot, height = 30, width = 20, units = "cm", limitsize=F, useDingbats=FALSE)
-
 # MR_LD1
 rg2_v2 = region_plot2 %>% filter(time_period == "LD1-MR") %>% select(c("prac_region", "discrete"))
 
@@ -319,8 +303,6 @@ rg2_v2_plot = plot_map_English_prac_regions(data = (rg2_v2),
                     drop = FALSE)
 
 rg2_v2_plot
-
-ggsave("Fig2D_2_LD1MR.pdf", plot=rg2_v2_plot, height = 30, width = 20, units = "cm", limitsize=F, useDingbats=FALSE)
 
 # LD2_MR
 rg2_v3 = region_plot2 %>% filter(time_period == "MR-LD2") %>% select(c("prac_region", "discrete"))
@@ -332,8 +314,6 @@ rg2_v3_plot = plot_map_English_prac_regions(data = (rg2_v3),
 
 rg2_v3_plot
 
-ggsave("Fig2D_3_MRLD2.pdf", plot=rg2_v3_plot, height = 30, width = 20, units = "cm", limitsize=F, useDingbats=FALSE)
-
 # LD3_LD2
 rg2_v4 = region_plot2 %>% filter(time_period == "LD2-LD3") %>% select(c("prac_region", "discrete"))
 
@@ -343,8 +323,6 @@ rg2_v4_plot = plot_map_English_prac_regions(data = (rg2_v4),
                     drop = FALSE)
 
 rg2_v4_plot
-
-ggsave("Fig2D_4_LD2LD3.pdf", plot=rg2_v4_plot, height = 30, width = 20, units = "cm", limitsize=F, useDingbats=FALSE)
 
 # LL_LD3
 rg2_v5 = region_plot2 %>% filter(time_period == "LD3-LL") %>% select(c("prac_region", "discrete"))
