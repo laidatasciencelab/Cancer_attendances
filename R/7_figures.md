@@ -23,7 +23,96 @@ library(ggallin)
 # Generated using external software
 ```
 
-## Figure 2A
+## Figure 2
+```R
+# Cancer diagnosis weekly rate change against 5 year average
+
+# Load data 
+add_data = fread("Fig2_addenum.csv")
+
+add_data_plot = ggplot(add_data, aes(x = week, y = pc_change, group = year, color = as.factor(year))) +
+  geom_line(size = 2) +
+  geom_hline(yintercept = 0, size = 1, color = "#000000") +
+
+  scale_x_continuous(expand = c(0, 0), limits = c(0, 52), n.breaks=52) +
+  scale_y_continuous(expand = c(0, 0), limits = c(-100, 10)) +
+  scale_color_manual(values = c("#000000", "#009E73", "#E69F00", "#56B4E9")) +
+  
+  ggtitle("Percentage change of weekly incident cancer diagnosis rates against weekly 5 year average rates (2018-2021)") +
+  xlab("\nTime (week)") +
+  ylab("\nPercentage change") +
+  labs(color= "Year") +
+  
+  theme_bw() +
+  theme(
+    plot.title = element_text(color="black",size=14,face="bold",hjust=0.5),
+    axis.title.x = element_text(color="black",size=14,face="bold"),
+    axis.title.y = element_text(color="black",size=14,face="bold"),
+    axis.text.x = element_text(size=13),
+    axis.text.y = element_text(size=15),
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank())
+
+add_data_plot
+```
+
+## Figure 3A
+```R
+# Volume ratio pc changes by stratified group 
+
+# Load data 
+hm_data2 = fread("Fig2B_volume.csv")
+
+hm_data2$Stratification = factor(hm_data2$Stratification, levels = unique(hm_data2$Stratification))
+
+# Data splits for heatmap threshold (options)
+data_split_colors_viridis = c("#440154", "#472d7b", "#3b528b", "#2c728e", "#21918c", "#3fbc73", "#5ec962", "#addc30", "#fde725")
+
+## make balanced data splits
+mat_breaks <- quantile_breaks(hm_data2$Pc_change, n = 12) # this generates 12 breaks/datapoints
+mat_breaks
+
+hm_data2$discrete = cut(hm_data2$Pc_change, breaks = c(-84.530000, -71.888182, -66.629091, -49.577273, -47.443636, -36.960000, -32.730000, -14.620909,1.710909, 4.866364, 9.726364, 208.000000))
+
+# Facet ordering 
+hm_data2$Stratification_group_o = factor(hm_data2$Stratification_group, levels = c("Age", "Comorbidities", "Ethnicity", "IMD", "Diagnosis time", "Primary cancer", "Secondary cancer", "Region"))
+hm_data2$Time_period_o = factor(hm_data$Time_period, levels = c("PP-LD1", "LD1-MR", "MR-LD2", "LD2-LD3", "LD3-LL"))
+#hm_data2$Time_period_o = factor(hm_data2$Time_period, levels = c("Pre-pandemic - Lockdown 1", "Lockdown 1 - Minimal restrictions", "Minimal restrictions - Lockdown 2", "Lockdown 2 - Lockdown 3", "Lockdown 3 - Leaving lockdown"))
+
+data_split_colors_viridis = c("#440154", "#472d7b", "#3b528b", "#2c728e", "#21918c", "#28ae80", "#3fbc73", "#5ec962", "#addc30", "#fde725")
+
+# Plotting
+hm_plot2 = ggplot(hm_data2, aes(x = Time_period, y = reorder(Stratification, Ordering))) +
+  geom_tile(aes(fill = discrete)) +
+  scale_fill_manual(breaks = levels(hm_data2$discrete),
+                    values = c("#440154", "#472d7b", "#3b528b", "#2c728e", "#21918c", "#28ae80", "#3fbc73", "#5ec962", "#84d44b", "#addc30", "#fde725"),
+                    drop = FALSE) +
+  facet_grid(Stratification_group_o ~ Time_period_o, scales = "free", space = "free") +
+
+  geom_text(aes(color="white", label = sprintf("%0.2f", round(Pc_change, digits = 2))), show.legend = FALSE) +
+  scale_colour_manual(values=c("#FFFFFF")) +
+
+  theme_bw() +
+  theme(#axis.text.x = element_text(size = 12, angle = 0, hjust = 0.5, family = "Helvetica"),
+    axis.text.y = element_text(size=12),
+    axis.text.x=element_blank(),
+    axis.ticks.x=element_blank(),
+    strip.text.y.right = element_text(angle = 0),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    strip.background =element_rect(fill="grey80"),
+    legend.position = "right") +
+
+  #labs(x = "", y = "") +
+  labs(fill = "Threshold") +
+
+  ggtitle("Attendance volume ratios between time periods (%)") +
+  xlab("\nTime period") +
+  ylab("")
+
+hm_plot2
+```
+
+## Figure 4A
 ```R
 # Rate ratio pc changes by stratified group 
 
@@ -84,63 +173,7 @@ hm_plot = ggplot(hm_data, aes(x = Time_period, y = reorder(Stratification, Order
 hm_plot
 ```
 
-## Figure 2B
-```R
-# Volume ratio pc changes by stratified group 
-
-# Load data 
-hm_data2 = fread("Fig2B_volume.csv")
-
-hm_data2$Stratification = factor(hm_data2$Stratification, levels = unique(hm_data2$Stratification))
-
-# Data splits for heatmap threshold (options)
-data_split_colors_viridis = c("#440154", "#472d7b", "#3b528b", "#2c728e", "#21918c", "#3fbc73", "#5ec962", "#addc30", "#fde725")
-
-## make balanced data splits
-mat_breaks <- quantile_breaks(hm_data2$Pc_change, n = 12) # this generates 12 breaks/datapoints
-mat_breaks
-
-hm_data2$discrete = cut(hm_data2$Pc_change, breaks = c(-84.530000, -71.888182, -66.629091, -49.577273, -47.443636, -36.960000, -32.730000, -14.620909,1.710909, 4.866364, 9.726364, 208.000000))
-
-# Facet ordering 
-hm_data2$Stratification_group_o = factor(hm_data2$Stratification_group, levels = c("Age", "Comorbidities", "Ethnicity", "IMD", "Diagnosis time", "Primary cancer", "Secondary cancer", "Region"))
-hm_data2$Time_period_o = factor(hm_data$Time_period, levels = c("PP-LD1", "LD1-MR", "MR-LD2", "LD2-LD3", "LD3-LL"))
-#hm_data2$Time_period_o = factor(hm_data2$Time_period, levels = c("Pre-pandemic - Lockdown 1", "Lockdown 1 - Minimal restrictions", "Minimal restrictions - Lockdown 2", "Lockdown 2 - Lockdown 3", "Lockdown 3 - Leaving lockdown"))
-
-data_split_colors_viridis = c("#440154", "#472d7b", "#3b528b", "#2c728e", "#21918c", "#28ae80", "#3fbc73", "#5ec962", "#addc30", "#fde725")
-
-#Plotting
-hm_plot2 = ggplot(hm_data2, aes(x = Time_period, y = reorder(Stratification, Ordering))) +
-  geom_tile(aes(fill = discrete)) +
-  scale_fill_manual(breaks = levels(hm_data2$discrete),
-                    values = c("#440154", "#472d7b", "#3b528b", "#2c728e", "#21918c", "#28ae80", "#3fbc73", "#5ec962", "#84d44b", "#addc30", "#fde725"),
-                    drop = FALSE) +
-  facet_grid(Stratification_group_o ~ Time_period_o, scales = "free", space = "free") +
-
-  geom_text(aes(color="white", label = sprintf("%0.2f", round(Pc_change, digits = 2))), show.legend = FALSE) +
-  scale_colour_manual(values=c("#FFFFFF")) +
-
-  theme_bw() +
-  theme(#axis.text.x = element_text(size = 12, angle = 0, hjust = 0.5, family = "Helvetica"),
-    axis.text.y = element_text(size=12),
-    axis.text.x=element_blank(),
-    axis.ticks.x=element_blank(),
-    strip.text.y.right = element_text(angle = 0),
-    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-    strip.background =element_rect(fill="grey80"),
-    legend.position = "right") +
-
-  #labs(x = "", y = "") +
-  labs(fill = "Threshold") +
-
-  ggtitle("Attendance volume ratios between time periods (%)") +
-  xlab("\nTime period") +
-  ylab("")
-
-hm_plot2
-```
-
-## Figure 2C 
+## Figure 3B/4B
 ```R
 # Region plot for rate ratios
 
@@ -324,7 +357,7 @@ rg2_v5_plot = plot_map_English_prac_regions(data = (rg2_v5),
 rg2_v5_plot
 ```
 
-## Figure 3
+## Figure 5
 ```R
 # Lollipop plot for intra-rate comparison
 
@@ -373,7 +406,7 @@ lolli_plot = ggplot(lolli_data, aes(y = Pc_change, x = reorder(Stratification, O
 lolli_plot
 ```
 
-## Figure 4A
+## Figure 6
 ```R
 # Seasonality GP 
 
@@ -409,10 +442,7 @@ season_gp_plot = ggplot(season_gp, aes(x = time, y = count, group = year, color 
     panel.grid.minor = element_blank())
 
 season_gp_plot
-```
 
-## Figure 4B
-```R
 # Seasonality APC 
 
 # Load data
@@ -447,10 +477,7 @@ season_APC_plot = ggplot(season_APC, aes(x = time, y = count, group = year, colo
     panel.grid.minor = element_blank())
 
 season_APC_plot
-```
 
-## Figure 4C
-```R
 # Seasonality OP
 
 # Load data
@@ -485,7 +512,7 @@ season_op_plot = ggplot(season_op, aes(x = time, y = count, group = year, color 
 season_op_plot
 ```
 
-## Figure 5
+## Figure 7
 ```R
 # ARIMA modelling
 
@@ -524,7 +551,7 @@ ITS_plot = ggplot(ITS_model, aes(time_from_base, count, group=Group,fill=Group, 
 ITS_plot
 ```
 
-## Figure 6
+## Figure 8
 ```R
 # Correlation plot of attendance and mortality inverse pc changes 
 

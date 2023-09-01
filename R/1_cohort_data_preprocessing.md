@@ -945,6 +945,59 @@ cancer_master = cancer_master %>% filter(condition_count <72)
 # Adding diagnosis time variable 
 cancer_master = cancer_master %>% mutate(diag_after_1 = ifelse(cancer_index_date < "2019-03-23", 0, 1))
 ```
+## Incident diagnosis count 
+```R
+# Wide cohort Aurum
+aurum_master = readRDS("cancer_aurum_master.rds")
+
+# Wide cohort Gold
+gold_master = readRDS("cancer_gold_master.rds")
+
+# Diagnosis rate by year from 2010
+gold_master = gold_master %>% select(patid, cancer_index_date) %>% filter(cancer_index_date > "2009-12-31") %>% mutate(year = format(cancer_index_date, "%Y"))
+
+aurum_master = aurum_master %>% select(patid, cancer_index_date) %>% filter(cancer_index_date > "2009-12-31") %>% mutate(year = format(cancer_index_date, "%Y"))
+
+diag_count_wide = rbind(gold_master, aurum_master)
+table(diag_count_wide$year)
+
+weekly_diag_wide = diag_count_wide %>% filter(cancer_index_date > "2012-12-31") %>% mutate(month_year = format(cancer_index_date, "%b-%Y")) %>% mutate(week = format(week(ymd(cancer_index_date))))
+
+# Diagnosis count
+diag_count_w = weekly_diag_wide %>% dplyr::count(year, week)
+
+# Finding out which weeks are missing for count continuity
+diag_dates = data.frame(dates = seq(min(weekly_diag_wide$cancer_index_date), max(weekly_diag_wide$cancer_index_date), by="days"))
+
+missing_ad = as.data.frame(diag_dates[!diag_dates$dates %in% weekly_diag_wide$cancer_index_date, ])
+colnames(missing_ad)[1] = "cancer_index_date"
+missing_ad$month_year = format(missing_ad$cancer_index_date, "%b-%Y")
+missing_ad$year = format(missing_ad$cancer_index_date, "%Y")
+missing_ad = missing_ad %>% mutate(week = week(ymd(cancer_index_date)))
+
+missing_ad_w = missing_ad[!duplicated(missing_ad[c(3,4)]), ]
+
+diag_count_0 = missing_ad_w[, c(3,4)]
+diag_count_0$concat = paste(diag_count_0$year, diag_count_0$week)
+
+diag_count_w$concat = paste(diag_count_w$year, diag_count_w$week)
+
+missing_ad_w = diag_count_0 %>% filter(!concat %in% diag_count_w$concat)
+diag_count_w$concat = NULL
+# All weeks accounted for 
+
+# Formatting week 53 as part of week 52
+diag_count_w$n[[423]] = (diag_count_w$n[[423]] + diag_count_w$n[[424]])
+diag_count_w$n[[370]] = (diag_count_w$n[[370]] + diag_count_w$n[[371]])
+diag_count_w$n[[317]] = (diag_count_w$n[[317]] + diag_count_w$n[[318]])
+diag_count_w$n[[264]] = (diag_count_w$n[[264]] + diag_count_w$n[[265]])
+diag_count_w$n[[211]] = (diag_count_w$n[[211]] + diag_count_w$n[[212]])
+diag_count_w$n[[158]] = (diag_count_w$n[[158]] + diag_count_w$n[[159]])
+diag_count_w$n[[105]] = (diag_count_w$n[[105]] + diag_count_w$n[[106]])
+diag_count_w$n[[52]] = (diag_count_w$n[[52]] + diag_count_w$n[[53]])
+
+diag_count_w = diag_count_w %>% filter(!row_number() %in% c(53,106,159,212,265,318,371,424))
+```
 
 # Output
-Output file is a cohort file with 564,026 eligible individuals. One further step is later applied after attendance pre-processing to remove individuals who only have attendance dates prior to their cancer index diagnosis date. This brings the final count of eligible individuals to 561,116 individuals.
+Output file is a cohort file with 564,026 eligible individuals. One further step is later applied after attendance pre-processing to remove individuals who only have attendance dates prior to their cancer index diagnosis date. This brings the final count of eligible individuals to 561,116 individuals. Second output file is an incident diagnosis count file.
