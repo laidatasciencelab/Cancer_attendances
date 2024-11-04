@@ -1,7 +1,7 @@
 # Impact of the COVID-19 pandemic on healthcare utilisation among patients with cancer: A comprehensive phase-by-phase time-series analysis of over 7.9M attendances from nationwide GPs and hospitals across 28 primary cancers and 10 secondary cancers
 
 ## How to cite this work
-> Tan YY et al,. "Impact of the COVID-19 pandemic on healthcare utilisation among patients with cancer: A comprehensive phase-by-phase time-series analysis of over 7.9M attendances from nationwide GPs and hospitals across 28 primary cancers and 10 secondary cancers" *insert journal* *insert vol*.*insert issue* *(insert year)*. *insert doi*
+> Tan YY, Chang WH, Katsoulis M, Denaxas S, King KC, Cox MP, et al. Impact of the COVID-19 pandemic on health-care use among patients with cancer in England, UK: a comprehensive phase-by-phase time-series analysis across attendance types for 38 cancers. The Lancet Digital Health. 2024 Oct 1;6(10):e691–704. 
 
 ## About the project 
 **Background**
